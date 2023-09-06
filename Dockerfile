@@ -1,0 +1,32 @@
+# Install dependencies only when needed
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+
+# Rebuild the source code only when needed
+FROM node:20-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED 1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Production image, copy all the files required to run next with prisma
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npm install prisma
+COPY --from=builder ./app/.next/standalone ./
+COPY --from=builder ./app/.next/static ./.next/static
+COPY --from=builder ./app/public ./public
+COPY --from=builder ./app/prisma ./prisma
+
+# migrate database tables and serve next app
+CMD ["/bin/sh","-c","npx prisma migrate deploy && node server.js"]
+
+# docker network create --driver=bridge app
+# docker run -itd --rm --network=app -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=mydb  --name=mysql mysql:latest
+# docker run -it --rm --network=app -p 32000:3000 --env-file=.env --name=discord-clone yash6370/discord-clone
