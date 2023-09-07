@@ -29,4 +29,4 @@ CMD ["/bin/sh","-c","npx prisma migrate deploy && node server.js"]
 
 # docker network create --driver=bridge app
 # docker run -itd --rm --network=app -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=mydb  --name=mysql mysql:latest
-# docker run -it --rm --network=app -p 32000:3000 --env-file=.env --name=breadit breadit
+# docker run -itd --rm --network=app -p 80:3000 --env-file=.env --name=breadit breadit
